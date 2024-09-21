@@ -1,0 +1,513 @@
+---
+title: "Phytree.2.0"
+author: "Vusi"
+date: "2024-08-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(rio)             # import/export
+library(here)            # relative file paths
+library(tidyverse)        # general data management and visualization
+library(ape)             # to import and export phylogenetic files
+library(ggtree)          # to visualize phylogenetic files
+library(treeio)          # to visualize phylogenetic files
+library(ggnewscale )     # to add additional layers of color schemes
+```
+
+
+```{r}
+library(readr)
+Shigella_tree <- read.tree("G:/My Drive/EPIR/Shigella_tree.txt")
+View(Shigella_tree)
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+library(readr)
+sample_data_Shigella_tree <- read_csv("G:/My Drive/EPIR/sample_data_Shigella_tree.csv")
+View(sample_data_Shigella_tree)
+```
+
+
+```{r}
+head(Shigella_tree$tip.label) 
+```
+
+
+```{r}
+Shigella_tree
+```
+
+
+
+
+
+```{r}
+colnames(sample_data_Shigella_tree)   
+```
+
+
+```{r}
+head(sample_data_Shigella_tree$Sample_ID) # we again inspect only the first 6 using head()
+```
+
+```{r}
+sample_data_Shigella_tree$Sample_ID %in% Shigella_tree$tip.label
+
+Shigella_tree$tip.label %in% sample_data_Shigella_tree$Sample_ID
+```
+
+
+```{r}
+ggtree(Shigella_tree)                            
+```
+
+
+```{r}
+ggtree(Shigella_tree,  branch.length = "none") 
+```
+
+
+```{r}
+ggtree(Shigella_tree, layout="circular")
+```
+
+
+```{r}
+ggtree(Shigella_tree, layout="circular", branch.length = "none")
+```
+
+
+```{r}
+ggtree(Shigella_tree, layout = "circular", branch.length = 'none') %<+% sample_data_Shigella_tree + # %<+% adds dataframe with sample data to tree
+  aes(color = Belgium)+                       # color the branches according to a variable in your dataframe
+  scale_color_manual(
+    name = "Sample Origin",                      # name of your color scheme (will show up in the legend like this)
+    breaks = c("Yes", "No"),                     # the different options in your variable
+    labels = c("NRCSS Belgium", "Other"),        # how you want the different options named in your legend, allows for formatting
+    values = c("blue", "black"),                  # the color you want to assign to the variable 
+    na.value = "black") +                        # color NA values in black as well
+  new_scale_color()+                             # allows to add an additional color scheme for another variable
+    geom_tippoint(
+      mapping = aes(color = Continent),          # tip color by continent. You may change shape adding "shape = "
+      size = 1.5)+                               # define the size of the point at the tip
+  scale_color_brewer(
+    name = "Continent",                    # name of your color scheme (will show up in the legend like this)
+    palette = "Set1",                      # we choose a set of colors coming with the brewer package
+    na.value = "grey") +                    # for the NA values we choose the color grey
+  geom_tiplab(                             # adds name of sample to tip of its branch 
+    color = 'black',                       # (add as many text lines as you wish with + , but you may need to adjust offset value to place them next to each other)
+    offset = 1,
+    size = 1,
+    geom = "text",
+    align = TRUE)+    
+  ggtitle("Phylogenetic tree of Shigella sonnei")+       # title of your graph
+  theme(
+    axis.title.x = element_blank(), # removes x-axis title
+    axis.title.y = element_blank(), # removes y-axis title
+    legend.title = element_text(    # defines font size and format of the legend title
+      face = "bold",
+      size = 12),   
+    legend.text=element_text(       # defines font size and format of the legend text
+      face = "bold",
+      size = 10),  
+    plot.title = element_text(      # defines font size and format of the plot title
+      size = 12,
+      face = "bold"),  
+    legend.position = "bottom",     # defines placement of the legend
+    legend.box = "vertical",        # defines placement of the legend
+    legend.margin = margin())   
+```
+
+
+```{r}
+ggsave("example_tree_circular_1.png", width = 12, height = 14)
+```
+
+
+```{r}
+p <- ggtree(Shigella_tree,) %<+% sample_data_Shigella_tree +
+  geom_tiplab(size = 1.5) +                # labels the tips of all branches with the sample name in the tree file
+  geom_text2(
+    mapping = aes(subset = !isTip,
+                  label = node),
+    size = 5,
+    color = "darkred",
+    hjust = 1,
+    vjust = 1)                            # labels all the nodes in the tree
+
+p  # print
+```
+
+```{r}
+viewClade(p, node = 452)
+```
+
+
+```{r}
+p_collapsed <- collapse(p, node = 452)
+p_collapsed
+```
+
+
+```{r}
+ggtree(
+  Shigella_tree,
+  branch.length = 'none',
+  layout = 'circular') %<+% sample_data_Shigella_tree +               # we add the asmple data using the %<+% operator
+  geom_tiplab(size = 1)+                                # label tips of all branches with sample name in tree file
+  geom_text2(
+    mapping = aes(subset = !isTip, label = node),
+    size = 3,
+    color = "darkred") +                                # labels all the nodes in the tree
+ theme(
+   legend.position = "none",                            # removes the legend all together
+   axis.title.x = element_blank(),
+   axis.title.y = element_blank(),
+   plot.title = element_text(size = 12, face="bold"))
+```
+
+```{r}
+
+```
+
+
+```{r}
+library(tidytree)
+sub_tree1 <- tidytree::tree_subset(
+Shigella_tree,
+node = 528)                                            # we subset the tree at node 528
+```
+
+
+```{r}
+ggtree(sub_tree1) +
+  geom_tiplab(size = 3) +
+  ggtitle("Subset tree 1")
+```
+
+
+```{r}
+sub_tree2 <- tree_subset(
+  Shigella_tree,
+  "S17BD07692",
+  levels_back = 9) # levels back defines how many nodes backwards from the sample tip you want to go
+```
+
+```{r}
+ggtree(sub_tree2) +
+  geom_tiplab(size =3)  +
+  ggtitle("Subset tree 2")
+```
+
+
+```{r}
+# to save in .nwk format
+ape::write.tree(sub_tree2, file='data/phylo/Shigella_subtree_2.nwk')
+
+# to save in .txt format
+ape::write.tree(sub_tree2, file='data/phylo/Shigella_subtree_2.txt')
+```
+
+```{r}
+p <- ggtree(sub_tree2) +  
+  geom_tiplab(size = 4) +
+  geom_text2(aes(subset=!isTip, label=node), # labels all the nodes in the tree
+             size = 5,
+             color = "darkred", 
+             hjust = 1, 
+             vjust = 1) 
+p
+```
+
+
+```{r}
+p1 <- p + geom_hilight(  # highlights node 39 in blue, "extend =" allows us to define the length of the color block
+  node = 39,
+  fill = "steelblue",
+  extend = 0.0017) +  
+geom_hilight(            # highlights the node 37 in yellow
+  node = 37,
+  fill = "yellow",
+  extend = 0.0017) +               
+ggtitle("Original tree")
+
+
+p1 # print
+```
+
+
+
+```{r}
+p2 <- ggtree::rotate(p1, 37) + 
+      ggtitle("Rotated Node 37")
+
+
+p2   # print
+```
+
+```{r}
+p3 <-  flip(p1, 39, 37) +
+      ggtitle("Rotated Node 36")
+
+
+p3   # print
+```
+
+
+```{r}
+ggtree(sub_tree2) %<+% sample_data_Shigella_tree +     # we use th %<+% operator to link to the sample_data
+  geom_tiplab(                          # labels the tips of all branches with the sample name in the tree file
+    size = 2.5,
+    offset = 0.001,
+    align = TRUE) + 
+  theme_tree2()+
+  xlim(0, 0.015)+                       # set the x-axis limits of our tree
+  geom_tippoint(aes(color=Country),     # color the tip point by continent
+                size = 1.5)+ 
+  scale_color_brewer(
+    name = "Country", 
+    palette = "Set1", 
+    na.value = "grey")+
+  geom_tiplab(                          # add isolation year as a text label at the tips
+    aes(label = Year),
+    color = 'blue',
+    offset = 0.0045,
+    size = 3,
+    linetype = "blank" ,
+    geom = "text",
+    align = TRUE)+ 
+  geom_tiplab(                          # add travel history as a text label at the tips, in red color
+    aes(label = Travel_history),
+    color = 'red',
+    offset = 0.006,
+    size = 3,
+    linetype = "blank",
+    geom = "text",
+    align = TRUE)+ 
+  ggtitle("Phylogenetic tree of Belgian S. sonnei strains with travel history")+  # add plot title
+  xlab("genetic distance (0.001 = 4 nucleotides difference)")+                    # add a label to the x-axis 
+  theme(
+    axis.title.x = element_text(size = 10),
+    axis.title.y = element_blank(),
+    legend.title = element_text(face = "bold", size = 12),
+    legend.text = element_text(face = "bold", size = 10),
+    plot.title = element_text(size = 12, face = "bold"))
+```
+
+
+```{r}
+p <- ggtree(sub_tree2, branch.length='none', layout='circular') %<+% sample_data_Shigella_tree +
+  geom_tiplab(size =3) + 
+ theme(
+   legend.position = "none",
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    plot.title = element_text(
+      size = 12,
+      face = "bold",
+      hjust = 0.5,
+      vjust = -15))
+p
+```
+
+
+```{r}
+gender <- data.frame("gender" = sample_data_Shigella_tree[,c("Gender")])
+rownames(gender) <- sample_data_Shigella_tree$Sample_ID
+```
+
+```{r}
+cipR <- data.frame("cipR" = sample_data_Shigella_tree[,c("gyrA_mutations")])
+rownames(cipR) <- sample_data_Shigella_tree$Sample_ID
+```
+
+
+```{r}
+MIC_Cip <- data.frame("mic_cip" = sample_data_Shigella_tree[,c("MIC_CIP")])
+rownames(MIC_Cip) <- sample_data_Shigella_tree$Sample_ID
+```
+
+
+```{r}
+h1 <-  gheatmap(p, gender,                                 # we add a heatmap layer of the gender dataframe to our tree plot
+                offset = 10,                               # offset shifts the heatmap to the right,
+                width = 0.10,                              # width defines the width of the heatmap column,
+                color = NULL,                              # color defines the boarder of the heatmap columns
+         colnames = FALSE) +                               # hides column names for the heatmap
+  scale_fill_manual(name = "Gender",                       # define the coloring scheme and legend for gender
+                    values = c("#00d1b1", "purple"),
+                    breaks = c("Male", "Female"),
+                    labels = c("Male", "Female")) +
+   theme(legend.position = "bottom",
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10),
+        legend.box = "vertical", legend.margin = margin())
+
+h1
+```
+
+
+```{r}
+h2 <- h1 + new_scale_fill() 
+```
+
+```{r}
+h3 <- gheatmap(h2, cipR,         # adds the second row of heatmap describing Ciprofloxacin resistance mutations
+               offset = 12, 
+               width = 0.10, 
+               colnames = FALSE) +
+  scale_fill_manual(name = "Ciprofloxacin resistance \n conferring mutation",
+                    values = c("#fe9698","#ea0c92"),
+                    breaks = c( "gyrA D87Y", "gyrA S83L"),
+                    labels = c( "gyrA d87y", "gyrA s83l")) +
+   theme(legend.position = "bottom",
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10),
+        legend.box = "vertical", legend.margin = margin())+
+  guides(fill = guide_legend(nrow = 2,byrow = TRUE))
+
+h3
+```
+
+
+```{r}
+#First we add the new coloring scheme:
+h4 <- h3 + new_scale_fill()
+h4
+```
+
+```{r}
+#then we combine the two into a new plot:
+h5 <- gheatmap(h4, MIC_Cip,  
+               offset = 14, 
+               width = 0.10,
+                colnames = FALSE)+
+  scale_fill_continuous(name = "MIC for Ciprofloxacin",  # here we define a gradient color scheme for the continuous variable of MIC
+                      low = "yellow", high = "red",
+                      breaks = c(0, 0.50, 1.00),
+                      na.value = "white") +
+   guides(fill = guide_colourbar(barwidth = 5, barheight = 1))+
+   theme(legend.position = "bottom",
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10),
+        legend.box = "vertical", legend.margin = margin())
+h5
+```
+
+
+```{r}
+p <- ggtree(sub_tree2) %<+% sample_data_Shigella_tree +
+  geom_tiplab(size = 3) + # labels the tips
+  theme_tree2()+
+  xlab("genetic distance (0.001 = 4 nucleotides difference)")+
+  xlim(0, 0.015)+
+ theme(legend.position = "none",
+      axis.title.y = element_blank(),
+      plot.title = element_text(size = 12, 
+                                face = "bold",
+                                hjust = 0.5,
+                                vjust = -15))
+p
+```
+
+
+```{r}
+h1 <-  gheatmap(p, gender, 
+                offset = 0.003,
+                width = 0.1, 
+                color="black", 
+         colnames = FALSE)+
+  scale_fill_manual(name = "Gender",
+                    values = c("#00d1b1", "purple"),
+                    breaks = c("Male", "Female"),
+                    labels = c("Male", "Female"))+
+   theme(legend.position = "bottom",
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10),
+        legend.box = "vertical", legend.margin = margin())
+h1
+```
+
+
+```{r}
+h2 <- h1 + new_scale_fill()
+h3 <- gheatmap(h2, cipR,   
+               offset = 0.004, 
+               width = 0.1,
+               color = "black",
+                colnames = FALSE)+
+  scale_fill_manual(name = "Ciprofloxacin resistance \n conferring mutation",
+                    values = c("#fe9698","#ea0c92"),
+                    breaks = c( "gyrA D87Y", "gyrA S83L"),
+                    labels = c( "gyrA d87y", "gyrA s83l"))+
+   theme(legend.position = "bottom",
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10),
+        legend.box = "vertical", legend.margin = margin())+
+  guides(fill = guide_legend(nrow = 2,byrow = TRUE))
+h3
+```
+
+
+```{r}
+h4 <- h3 + new_scale_fill()
+h5 <- gheatmap(h4, MIC_Cip, 
+               offset = 0.005,  
+               width = 0.1,
+               color = "black", 
+                colnames = FALSE)+
+  scale_fill_continuous(name = "MIC for Ciprofloxacin",
+                      low = "yellow", high = "red",
+                      breaks = c(0,0.50,1.00),
+                      na.value = "white")+
+   guides(fill = guide_colourbar(barwidth = 5, barheight = 1))+
+   theme(legend.position = "bottom",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 8),
+        legend.box = "horizontal", legend.margin = margin())+
+  guides(shape = guide_legend(override.aes = list(size = 2)))
+
+h5
+```
+
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
